@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文本加密混淆工具（完整版·多语言）</title>
+    <script src="https://cdn.bootcdn.net/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/crypto-js/4.2.0/components/mode-ecb.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/crypto-js/4.2.0/components/pad-zeropadding.min.js"></script>
+    <style>
+        * {margin: 0;padding: 0;box-sizing: border-box;transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;}
+        :root {--bg-color: #f8fafc;--text-color: #1e293b;--input-bg: #ffffff;--input-border: #e2e8f0;--input-focus: #3b82f6;--button-primary: #3b82f6;--button-primary-hover: #2563eb;--button-secondary: #64748b;--button-secondary-hover: #475569;--card-bg: #ffffff;--card-shadow: 0 1px 3px rgba(0,0,0,0.1);--tip-success-bg: #ecfdf5;--tip-success-text: #065f46;--tip-error-bg: #fef2f2;--tip-error-text: #991b1b;--select-bg: #ffffff;--select-border: #e2e8f0;--file-input-bg: #f1f5f9;--tag-active: #3b82f6;--tag-default: #e2e8f0;--tag-text-active: #fff;--tag-text: #1e293b;--modal-mask: rgba(0,0,0,0.5);--modal-bg: #fff;--modal-border: #e2e8f0;}
+        :root.dark {--bg-color: #0f172a;--text-color: #f1f5f9;--input-bg: #1e293b;--input-border: #334155;--input-focus: #60a5fa;--button-primary: #3b82f6;--button-primary-hover: #60a5fa;--button-secondary: #94a3b8;--button-secondary-hover: #cbd5e1;--card-bg: #1e293b;--card-shadow: 0 1px 3px rgba(0,0,0,0.3);--tip-success-bg: #0f766e;--tip-success-text: #ccff33;--tip-error-bg: #7f1d1d;--tip-error-text: #fecdd3;--select-bg: #1e293b;--select-border: #334155;--file-input-bg: #273449;--tag-active: #3b82f6;--tag-default: #334155;--tag-text-active: #fff;--tag-text: #f1f5f9;--modal-mask: rgba(0,0,0,0.7);--modal-bg: #1e293b;--modal-border: #334155;}
+        body {max-width: 900px;margin: 40px auto;padding: 0 20px;font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;background-color: var(--bg-color);color: var(--text-color);line-height: 1.6;}
+        .header {display: flex;justify-content: space-between;align-items: center;margin-bottom: 30px;flex-wrap: wrap;gap: 15px;}
+        .title {font-size: 24px;font-weight: 600;color: var(--button-primary);}
+        .theme-toggle, .help-btn, .lang-toggle {padding: 8px 16px;border: none;border-radius: 6px;background: var(--button-secondary);color: white;cursor: pointer;font-size: 14px;}
+        .theme-toggle:hover, .help-btn:hover, .lang-toggle:hover {background: var(--button-secondary-hover);}
+        .input-group {margin-bottom: 25px;padding: 20px;background-color: var(--card-bg);border-radius: 10px;box-shadow: var(--card-shadow);}
+        .input-group label {display: block;margin-bottom: 10px;font-weight: 500;font-size: 15px;}
+        .input-group input,.input-group textarea,.input-group select {width: 100%;padding: 12px 15px;border: 2px solid var(--input-border);border-radius: 8px;font-size: 16px;resize: vertical;background-color: var(--input-bg);color: var(--text-color);font-family: inherit;-webkit-tap-highlight-color: transparent;}
+        .input-group input:focus,.input-group textarea:focus,.input-group select:focus {outline: none;border-color: var(--input-focus);}
+        .input-group textarea {min-height: 150px;}
+        .encrypt-type {margin-bottom: 20px;}
+        .custom-rule {display: flex;gap: 15px;flex-wrap: wrap;margin: 15px 0;}
+        .custom-rule > div {flex: 1;min-width: 200px;}
+        .file-upload {margin: 15px 0;}
+        .file-input {display: none;}
+        .file-btn {padding: 8px 16px;background: var(--file-input-bg);border: 1px solid var(--input-border);border-radius: 6px;color: var(--text-color);cursor: pointer;font-size: 14px;}
+        .file-btn:hover {background: var(--input-bg);}
+        .button-group {margin: 25px 0;display: flex;gap: 12px;flex-wrap: wrap;}
+        .button-group button {padding: 12px 24px;border: none;border-radius: 8px;background: var(--button-primary);color: white;font-size: 16px;cursor: pointer;transition: all 0.2s ease;font-weight: 500;-webkit-tap-highlight-color: transparent;}
+        .button-group button:hover {background: var(--button-primary-hover);transform: translateY(-1px);}
+        .button-group .secondary-btn {background: var(--button-secondary);}
+        .button-group .secondary-btn:hover {background: var(--button-secondary-hover);}
+        .result-btn-group {margin-top: 10px;display: flex;gap: 12px;flex-wrap: wrap;}
+        .result-btn {padding: 10px 20px;font-size: 15px;border: none;border-radius: 8px;color: white;cursor: pointer;transition: all 0.2s ease;-webkit-tap-highlight-color: transparent;}
+        .copy-btn {background: var(--button-secondary);}
+        .copy-btn:hover {background: var(--button-secondary-hover);}
+        .export-btn {background: #10b981;}
+        .export-btn:hover {background: #059669;}
+        .copy-tip {position: fixed;top: 20px;right: 20px;padding: 12px 24px;border-radius: 8px;opacity: 0;visibility: hidden;transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;z-index: 999;transform: translateY(-10px);font-weight: 500;}
+        .copy-tip.success {background-color: var(--tip-success-bg);color: var(--tip-success-text);}
+        .copy-tip.error {background-color: var(--tip-error-bg);color: var(--tip-error-text);}
+        .copy-tip.show {opacity: 1;visibility: visible;transform: translateY(0);}
+        .desc {font-size: 14px;color: var(--text-color);opacity: 0.8;margin-top: 5px;margin-bottom: 15px;line-height: 1.5;}
+        .warning {color: #f59e0b;opacity: 1;}
+        .encrypt-filter {display: flex;gap: 8px;flex-wrap: wrap;margin-bottom: 12px;align-items: center;}
+        .filter-tag {padding: 6px 12px;border-radius: 20px;font-size: 13px;cursor: pointer;border: none;background: var(--tag-default);color: var(--tag-text);transition: all 0.2s ease;-webkit-tap-highlight-color: transparent;}
+        .filter-tag.active {background: var(--tag-active);color: var(--tag-text-active);font-weight: 500;}
+        .filter-tag:hover {opacity: 0.9;}
+        /* 弹窗优化：手机端滚动丝滑，加兼容属性 */
+        .help-modal {position: fixed;top: 0;left: 0;width: 100%;height: 100%;z-index: 9999;display: none;}
+        .modal-mask {width: 100%;height: 100%;background: var(--modal-mask);}
+        .modal-content {position: absolute;top: 50%;left: 50%;transform: translate(-50%, -50%);width: 90%;max-width: 800px;max-height: 85vh;background: var(--modal-bg);border: 1px solid var(--modal-border);border-radius: 10px;padding: 24px;overflow-y: auto;/* 兼容性滚动优化 */-webkit-overflow-scrolling: touch;scroll-behavior: smooth;}
+        .modal-close {position: sticky;top: 0;left: 100%;transform: translateX(-100%);width: 32px;height: 32px;border-radius: 50%;border: none;background: var(--button-secondary);color: white;cursor: pointer;font-size: 16px;display: flex;align-items: center;justify-content: center;margin-bottom: 16px;-webkit-tap-highlight-color: transparent;}
+        .modal-close:hover {background: var(--button-secondary-hover);}
+        .modal-title {font-size: 20px;font-weight: 600;color: var(--button-primary);margin-bottom: 16px;padding-bottom: 8px;border-bottom: 1px solid var(--modal-border);}
+        .modal-section {margin-bottom: 20px;}
+        .modal-section h3 {font-size: 16px;font-weight: 600;margin: 12px 0 8px;}
+        .modal-section p, .modal-section li {font-size: 14px;line-height: 1.7;margin-bottom: 6px;}
+        .modal-section ul {padding-left: 20px;margin-bottom: 6px;}
+        .modal-tip {color: var(--button-primary);font-weight: 500;}
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="title" id="toolTitle">文本加密混淆工具</div>
+        <div style="display: flex;gap: 10px;align-items: center;">
+            <button class="help-btn" id="helpBtn">使用说明</button>
+            <!-- 新增：中英文切换按钮 -->
+            <button class="lang-toggle" id="langToggle">切换英文</button>
+            <button class="theme-toggle" id="themeToggle">切换深色模式</button>
+        </div>
+    </div>
+
+    <div class="input-group">
+        <label for="encryptType" id="encryptTypeLabel">加密/解密方式（共10种）：</label>
+        <div class="encrypt-filter">
+            <button class="filter-tag active" data-type="all" id="filterAll">全部</button>
+            <button class="filter-tag" data-type="high-safety" id="filterHighSafety">高安全类</button>
+            <button class="filter-tag" data-type="light-mix" id="filterLightMix">轻量混淆类</button>
+            <button class="filter-tag" data-type="encode" id="filterEncode">编码传输类</button>
+            <button class="filter-tag" data-type="custom" id="filterCustom">自定义类</button>
+        </div>
+        <select id="encryptType" class="encrypt-type">
+            <option value="aes" data-cate="high-safety" data-lang-zh="AES对称加密（高安全，国际标准）" data-lang-en="AES Symmetric Encryption (High Security, International Standard)">AES对称加密（高安全，国际标准）</option>
+            <option value="sm4" data-cate="high-safety" data-lang-zh="SM4国密加密（商用合规，国内推荐）" data-lang-en="SM4 National Encryption (Commercial Compliance, Recommended in China)">SM4国密加密（商用合规，国内推荐）</option>
+            <option value="rc4" data-cate="high-safety" data-lang-zh="RC4流加密（平衡安全与速度）" data-lang-en="RC4 Stream Encryption (Balance Security and Speed)">RC4流加密（平衡安全与速度）</option>
+            <option value="xor" data-cate="light-mix" data-lang-zh="异或加密（极简快速，轻量混淆）" data-lang-en="XOR Encryption (Ultra Fast, Light Obfuscation)">异或加密（极简快速，轻量混淆）</option>
+            <option value="caesarPlus" data-cate="light-mix" data-lang-zh="凯撒增强版（兼容中文，灵活偏移）" data-lang-en="Caesar Plus (Support Chinese, Flexible Offset)">凯撒增强版（兼容中文，灵活偏移）</option>
+            <option value="charMove" data-cate="light-mix" data-lang-zh="字符移位混淆（自定义步数，易操作）" data-lang-en="Character Shift Obfuscation (Custom Steps, Easy to Use)">字符移位混淆（自定义步数，易操作）</option>
+            <option value="base91" data-cate="encode" data-lang-zh="Base91编码（高压缩比，混淆性强）" data-lang-en="Base91 Encoding (High Compression, Strong Obfuscation)">Base91编码（高压缩比，混淆性强）</option>
+            <option value="base64" data-cate="encode" data-lang-zh="Base64编码（通用兼容，传输首选）" data-lang-en="Base64 Encoding (Universal Compatibility, First Choice for Transmission)">Base64编码（通用兼容，传输首选）</option>
+            <option value="base32" data-cate="encode" data-lang-zh="Base32编码（低辨识度，隐蔽性好）" data-lang-en="Base32 Encoding (Low Recognition, Good Concealment)">Base32编码（低辨识度，隐蔽性好）</option>
+            <option value="customMix" data-cate="custom" data-lang-zh="自定义规则混淆（个性化配置）" data-lang-en="Custom Rule Obfuscation (Personalized Configuration)">自定义规则混淆（个性化配置）</option>
+        </select>
+        <div class="desc" id="encryptDesc">
+            📌 高安全类：AES/SM4需16位密钥｜轻量类：任意密钥，快速混淆<br>
+            📌 编码类：无密钥，方便传输｜自定义类：偏移量+混淆字符需一致
+        </div>
+
+        <label for="aesKey" id="keyLabel">AES/SM4/RC4/异或/凯撒增强/移位 密钥（SM4必填16位，其余任意）：</label>
+        <input type="text" id="aesKey" placeholder="SM4固定16位，如abcdef1234567890" id="keyPlaceholder">
+        <div class="desc warning" id="keyWarning">⚠️ 对称加密密钥丢失无法解密，国密SM4密钥必须16位！</div>
+
+        <div class="custom-rule">
+            <div>
+                <label for="mixOffset" id="offsetLabel">偏移/移位步数（凯撒增强/移位/自定义混淆用，1-50）：</label>
+                <input type="number" id="mixOffset" value="5" min="1" max="50">
+            </div>
+            <div>
+                <label for="mixChars" id="mixCharsLabel">混淆插入字符（仅自定义混淆用）：</label>
+                <input type="text" id="mixChars" value="★■●▲◆" placeholder="如：★■●▲◆（自定义特殊字符）" id="mixCharsPlaceholder">
+            </div>
+        </div>
+
+        <div class="file-upload">
+            <label id="fileUploadLabel">批量导入文本（支持.txt文件）：</label>
+            <input type="file" id="fileInput" class="file-input" accept=".txt">
+            <label for="fileInput" class="file-btn" id="fileBtn">选择文件</label>
+            <div class="desc" id="fileDesc">导入后文本会自动填充到原始文本框中</div>
+        </div>
+    </div>
+
+    <div class="input-group">
+        <label for="originText" id="originTextLabel">原始文本：</label>
+        <textarea id="originText" placeholder="输入/导入要加密/解密的文本（支持汉字、字母、数字等）..." id="originTextPlaceholder"></textarea>
+    </div>
+    <div class="button-group">
+        <button onclick="encryptText()" id="encryptBtn">加密/混淆</button>
+        <button onclick="decryptText()" id="decryptBtn">解密/还原</button>
+        <button class="secondary-btn" onclick="clearAll()" id="clearBtn">清空内容</button>
+    </div>
+    <div class="input-group">
+        <label for="resultText" id="resultTextLabel">处理结果：</label>
+        <textarea id="resultText" placeholder="处理后的结果..." readonly id="resultTextPlaceholder"></textarea>
+        <div class="result-btn-group">
+            <button class="result-btn copy-btn" onclick="copyResult()" id="copyBtn">复制</button>
+            <button class="result-btn export-btn" onclick="exportResult()" id="exportBtn">导出为TXT</button>
+        </div>
+    </div>
+    <div class="copy-tip" id="copyTip">复制成功！</div>
+
+    <div class="help-modal" id="helpModal">
+        <div class="modal-mask" id="modalMask"></div>
+        <div class="modal-content">
+            <button class="modal-close" id="modalClose">×</button>
+            <div class="modal-title" id="modalTitle">文本加密混淆工具 使用说明书</div>
+            <div class="modal-section">
+                <h3 id="modalSection1Title">一、 工具基础信息</h3>
+                <p id="modalSection1P1">✅ 核心功能：10种文本加密/解密/混淆/编码，兼容汉字、字母、数字、特殊符号</p>
+                <p id="modalSection1P2">✅ 运行方式：纯前端本地处理，数据不上传，无泄露风险</p>
+                <p id="modalSection1P3">✅ 附加功能：TXT导入导出、一键复制、深色模式、分类筛选、内置说明书</p>
+                <p id="modalSection1P4">✅ 适用设备：电脑/手机浏览器通用，部署后可跨设备访问</p>
+            </div>
+            <div class="modal-section">
+                <h3 id="modalSection2Title">二、 3步快速上手（新手必看）</h3>
+                <p id="modalSection2P1">1.  选方式：点顶部筛选标签（推荐）或下拉框，快速匹配使用场景</p>
+                <p id="modalSection2P2">2.  填参数：按需填密钥/步数/混淆字符，编码类无需填任何参数</p>
+                <p id="modalSection2P3">3.  出结果：输入文本→点加密/解密→复制/导出结果即可</p>
+            </div>
+            <div class="modal-section">
+                <h3 id="modalSection3Title">三、 10种加密方式分类说明（重点）</h3>
+                <p class="modal-tip" id="modalSection3Tip1">【高安全类】（敏感/商用数据首选，保密性强）</p>
+                <ul id="modalSection3Ul1">
+                    <li id="modalSection3Li1">AES加密：密钥16/24/32位，国际标准，安全性极高</li>
+                    <li id="modalSection3Li2">SM4加密：强制16位密钥，国内商用合规，政企优先用</li>
+                    <li id="modalSection3Li3">RC4加密：任意密钥，速度快，平衡安全与便捷</li>
+                </ul>
+                <p class="modal-tip" id="modalSection3Tip2">【轻量混淆类】（日常快速用，操作简单）</p>
+                <ul id="modalSection3Ul2">
+                    <li id="modalSection3Li4">异或加密：任意密钥，加密解密同一函数，速度最快</li>
+                    <li id="modalSection3Li5">凯撒增强：无需密钥，填偏移步数，兼容所有字符</li>
+                    <li id="modalSection3Li6">字符移位：无需密钥，填移位步数，文本越长混淆效果越好</li>
+                </ul>
+                <p class="modal-tip" id="modalSection3Tip3">【编码传输类】（无密钥，跨平台传输首选，仅混淆）</p>
+                <ul id="modalSection3Ul3">
+                    <li id="modalSection3Li7">Base64：通用兼容，所有设备支持，传输首选</li>
+                    <li id="modalSection3Li8">Base91：压缩比高15%，混淆性比Base64强</li>
+                    <li id="modalSection3Li9">Base32：仅大写字母+数字，隐蔽性强，不易被识别</li>
+                </ul>
+                <p class="modal-tip" id="modalSection3Tip4">【自定义类】（个性化混淆，灵活度高）</p>
+                <ul id="modalSection3Ul4">
+                    <li id="modalSection3Li10">自定义混淆：填偏移步数+插入字符，双重混淆，需完全匹配参数解密</li>
+                </ul>
+            </div>
+            <div class="modal-section">
+                <h3 id="modalSection4Title">四、 附加功能使用</h3>
+                <ul id="modalSection4Ul1">
+                    <li id="modalSection4Li1">导入TXT：点「选择文件」，仅支持纯文本TXT，内容自动填充</li>
+                    <li id="modalSection4Li2">导出TXT：生成结果后点「导出」，自动命名为日期格式，方便归档</li>
+                    <li id="modalSection4Li3">一键复制：点「复制」，结果存剪贴板，弹窗提示成功</li>
+                    <li id="modalSection4Li4">深色模式：点「切换深色模式」，自动记忆状态，护眼舒适</li>
+                    <li id="modalSection4Li5">清空内容：一键重置所有输入/结果，恢复默认设置</li>
+                </ul>
+            </div>
+            <div class="modal-section">
+                <h3 id="modalSection5Title">五、 常见问题排查（排坑必看）</h3>
+                <ul id="modalSection5Ul1">
+                    <li id="modalSection5Li1">解密失败：对称加密确认密钥一致，偏移类确认步数一致，自定义混淆确认步数+字符完全一致</li>
+                    <li id="modalSection5Li2">出现乱码：AES/SM4/异或加密后正常现象，解密后可恢复，不影响使用</li>
+                    <li id="modalSection5Li3">导入失败：确认是.txt格式，文件为纯文本，无特殊加密</li>
+                    <li id="modalSection5Li4">导出失败：开启浏览器下载权限，也可复制结果手动新建TXT</li>
+                </ul>
+            </div>
+            <div class="modal-section">
+                <h3 id="modalSection6Title">六、 安全提示</h3>
+                <p id="modalSection6P1">🔒 所有操作本地完成，数据绝对安全，无需担心泄露</p>
+                <p id="modalSection6P2">🔒 对称加密密钥无备份，丢失后无法解密，务必妥善保管</p>
+                <p id="modalSection6P3">🔒 高度敏感数据优先选AES/SM4，非敏感数据可选轻量混淆/编码</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== 新增：多语言配置 ==========
+        const langConfig = {
+            zh: {
+                toolTitle: "文本加密混淆工具",
+                helpBtn: "使用说明",
+                langToggle: "切换英文",
+                themeToggle: "切换深色模式",
+                encryptTypeLabel: "加密/解密方式（共10种）：",
+                filterAll: "全部",
+                filterHighSafety: "高安全类",
+                filterLightMix: "轻量混淆类",
+                filterEncode: "编码传输类",
+                filterCustom: "自定义类",
+                encryptDesc: "📌 高安全类：AES/SM4需16位密钥｜轻量类：任意密钥，快速混淆<br>📌 编码类：无密钥，方便传输｜自定义类：偏移量+混淆字符需一致",
+                keyLabel: "AES/SM4/RC4/异或/凯撒增强/移位 密钥（SM4必填16位，其余任意）：",
+                keyPlaceholder: "SM4固定16位，如abcdef1234567890",
+                keyWarning: "⚠️ 对称加密密钥丢失无法解密，国密SM4密钥必须16位！",
+                offsetLabel: "偏移/移位步数（凯撒增强/移位/自定义混淆用，1-50）：",
+                mixCharsLabel: "混淆插入字符（仅自定义混淆用）：",
+                mixCharsPlaceholder: "如：★■●▲◆（自定义特殊字符）",
+                fileUploadLabel: "批量导入文本（支持.txt文件）：",
+                fileBtn: "选择文件",
+                fileDesc: "导入后文本会自动填充到原始文本框中",
+                originTextLabel: "原始文本：",
+                originTextPlaceholder: "输入/导入要加密/解密的文本（支持汉字、字母、数字等）...",
+                encryptBtn: "加密/混淆",
+                decryptBtn: "解密/还原",
+                clearBtn: "清空内容",
+                resultTextLabel: "处理结果：",
+                resultTextPlaceholder: "处理后的结果...",
+                copyBtn: "复制",
+                exportBtn: "导出为TXT",
+                copyTipSuccess: "复制成功！",
+                copyTipError: "暂无可复制内容！",
+                copyTipImportSuccess: "导入成功！",
+                copyTipExportSuccess: "导出TXT成功！",
+                copyTipImportError: "仅支持.txt文件！",
+                copyTipFileReadError: "文件读取失败！",
+                modalTitle: "文本加密混淆工具 使用说明书",
+                modalSection1Title: "一、 工具基础信息",
+                modalSection1P1: "✅ 核心功能：10种文本加密/解密/混淆/编码，兼容汉字、字母、数字、特殊符号",
+                modalSection1P2: "✅ 运行方式：纯前端本地处理，数据不上传，无泄露风险",
+                modalSection1P3: "✅ 附加功能：TXT导入导出、一键复制、深色模式、分类筛选、内置说明书",
+                modalSection1P4: "✅ 适用设备：电脑/手机浏览器通用，部署后可跨设备访问",
+                modalSection2Title: "二、 3步快速上手（新手必看）",
+                modalSection2P1: "1.  选方式：点顶部筛选标签（推荐）或下拉框，快速匹配使用场景",
+                modalSection2P2: "2.  填参数：按需填密钥/步数/混淆字符，编码类无需填任何参数",
+                modalSection2P3: "3.  出结果：输入文本→点加密/解密→复制/导出结果即可",
+                modalSection3Title: "三、 10种加密方式分类说明（重点）",
+                modalSection3Tip1: "【高安全类】（敏感/商用数据首选，保密性强）",
+                modalSection3Li1: "AES加密：密钥16/24/32位，国际标准，安全性极高",
+                modalSection3Li2: "SM4加密：强制16位密钥，国内商用合规，政企优先用",
+                modalSection3Li3: "RC4加密：任意密钥，速度快，平衡安全与便捷",
+                modalSection3Tip2: "【轻量混淆类】（日常快速用，操作简单）",
+                modalSection3Li4: "异或加密：任意密钥，加密解密同一函数，速度最快",
+                modalSection3Li5: "凯撒增强：无需密钥，填偏移步数，兼容所有字符",
+                modalSection3Li6: "字符移位：无需密钥，填移位步数，文本越长混淆效果越好",
+                modalSection3Tip3: "【编码传输类】（无密钥，跨平台传输首选，仅混淆）",
+                modalSection3Li7: "Base64：通用兼容，所有设备支持，传输首选",
+                modalSection3Li8: "Base91：压缩比高15%，混淆性比Base64强",
+                modalSection3Li9: "Base32：仅大写字母+数字，隐蔽性强，不易被识别",
+                modalSection3Tip4: "【自定义类】（个性化混淆，灵活度高）",
+                modalSection3Li10: "自定义混淆：填偏移步数+插入字符，双重混淆，需完全匹配参数解密",
+                modalSection4Title: "四、 附加功能使用",
+                modalSection4Li1: "导入TXT：点「选择文件」，仅支持纯文本TXT，内容自动填充",
+                modalSection4Li2: "导出TXT：生成结果后点「导出」，自动命名为日期格式，方便归档",
+                modalSection4Li3: "一键复制：点「复制」，结果存剪贴板，弹窗提示成功",
+                modalSection4Li4: "深色模式：点「切换深色模式」，自动记忆状态，护眼舒适",
+                modalSection4Li5: "清空内容：一键重置所有输入/结果，恢复默认设置",
+                modalSection5Title: "五、 常见问题排查（排坑必看）",
+                modalSection5Li1: "解密失败：对称加密确认密钥一致，偏移类确认步数一致，自定义混淆确认步数+字符完全一致",
+                modalSection5Li2: "出现乱码：AES/SM4/异或加密后正常现象，解密后可恢复，不影响使用",
+                modalSection5Li3: "导入失败：确认是.txt格式，文件为纯文本，无特殊加密",
+                modalSection5Li4: "导出失败：开启浏览器下载权限，也可复制结果手动新建TXT",
+                modalSection6Title: "六、 安全提示",
+                modalSection6P1: "🔒 所有操作本地完成，数据绝对安全，无需担心泄露",
+                modalSection6P2: "🔒 对称加密密钥无备份，丢失后无法解密，务必妥善保管",
+                modalSection6P3: "🔒 高度敏感数据优先选AES/SM4，非敏感数据可选轻量混淆/编码",
+                alertNoText: "请输入原始文本！",
+                alertNoDecryptText: "请输入待解密文本！",
+                alertAESKey: "AES密钥必须是16/24/32位！",
+                alertSM4Key: "SM4国密密钥必须是16位！",
+                alertXORKey: "请输入异或密钥",
+                alertRC4Key: "请输入RC4密钥",
+                alertBase91Format: "Base91格式错误",
+                alertBase64Format: "Base64格式错误",
+                alertCustomMixFormat: "非自定义混淆文本",
+                alertAESEncryptFormat: "AES密文格式错误"
+            },
+            en: {
+                toolTitle: "Text Obfuscation Tool",
+                helpBtn: "User Guide",
+                langToggle: "Switch to Chinese",
+                themeToggle: "Toggle Dark Mode",
+                encryptTypeLabel: "Encryption/Decryption Method (10 types in total)：",
+                filterAll: "All",
+                filterHighSafety: "High Security",
+                filterLightMix: "Light Obfuscation",
+                filterEncode: "Encoding & Transmission",
+                filterCustom: "Custom",
+                encryptDesc: "📌 High Security: AES/SM4 requires 16-bit key｜Light: Any key, fast obfuscation<br>📌 Encoding: No key needed, easy transmission｜Custom: Offset + mix chars must match",
+                keyLabel: "Key for AES/SM4/RC4/XOR/Caesar Plus/Shift (SM4 requires 16 bits, others arbitrary)：",
+                keyPlaceholder: "SM4 fixed 16 bits, e.g., abcdef1234567890",
+                keyWarning: "⚠️ Symmetric encryption key loss cannot decrypt, SM4 key must be 16 bits!",
+                offsetLabel: "Offset/Shift Steps (for Caesar Plus/Shift/Custom Obfuscation, 1-50)：",
+                mixCharsLabel: "Obfuscation Insert Characters (only for custom obfuscation)：",
+                mixCharsPlaceholder: "e.g., ★■●▲◆ (custom special characters)",
+                fileUploadLabel: "Batch Import Text (supports .txt files)：",
+                fileBtn: "Select File",
+                fileDesc: "After import, text will be automatically filled into the original text box",
+                originTextLabel: "Original Text：",
+                originTextPlaceholder: "Enter/import text to encrypt/decrypt (supports Chinese, letters, numbers, etc.)...",
+                encryptBtn: "Encrypt/Obfuscate",
+                decryptBtn: "Decrypt/Restore",
+                clearBtn: "Clear All",
+                resultTextLabel: "Processing Result：",
+                resultTextPlaceholder: "Processed result...",
+                copyBtn: "Copy",
+                exportBtn: "Export as TXT",
+                copyTipSuccess: "Copy Success!",
+                copyTipError: "No content to copy!",
+                copyTipImportSuccess: "Import Success!",
+                copyTipExportSuccess: "Export TXT Success!",
+                copyTipImportError: "Only .txt files are supported!",
+                copyTipFileReadError: "File read failed!",
+                modalTitle: "Text Obfuscation Tool - User Guide",
+                modalSection1Title: "1. Tool Basic Information",
+                modalSection1P1: "✅ Core Function: 10 types of text encryption/decryption/obfuscation/encoding, supports Chinese, letters, numbers, special symbols",
+                modalSection1P2: "✅ Running Mode: Pure front-end local processing, no data upload, no leakage risk",
+                modalSection1P3: "✅ Additional Functions: TXT import/export, one-click copy, dark mode, category filter, built-in user guide",
+                modalSection1P4: "✅ Applicable Devices: Universal for computer/mobile browsers, accessible across devices after deployment",
+                modalSection2Title: "2. Quick Start in 3 Steps (For Beginners)",
+                modalSection2P1: "1. Select Method: Click top filter tags (recommended) or dropdown box to match usage scenarios quickly",
+                modalSection2P2: "2. Fill Parameters: Fill in key/steps/mix chars as needed, no parameters needed for encoding types",
+                modalSection2P3: "3. Get Result: Enter text → click Encrypt/Decrypt → copy/export result",
+                modalSection3Title: "3. Classification of 10 Encryption Methods (Key Point)",
+                modalSection3Tip1: "[High Security] (First choice for sensitive/commercial data, strong confidentiality)",
+                modalSection3Li1: "AES Encryption: Key 16/24/32 bits, international standard, extremely high security",
+                modalSection3Li2: "SM4 Encryption: Mandatory 16-bit key, domestic commercial compliance, preferred for government/enterprise",
+                modalSection3Li3: "RC4 Encryption: Any key, fast speed, balance security and convenience",
+                modalSection3Tip2: "[Light Obfuscation] (Daily quick use, simple operation)",
+                modalSection3Li4: "XOR Encryption: Any key, same function for encryption/decryption, fastest speed",
+                modalSection3Li5: "Caesar Plus: No key needed, fill offset steps, supports all characters",
+                modalSection3Li6: "Character Shift: No key needed, fill shift steps, better obfuscation for longer text",
+                modalSection3Tip3: "[Encoding & Transmission] (No key, first choice for cross-platform transmission, only obfuscation)",
+                modalSection3Li7: "Base64: Universal compatibility, supported by all devices, first choice for transmission",
+                modalSection3Li8: "Base91: 15% higher compression ratio, stronger obfuscation than Base64",
+                modalSection3Li9: "Base32: Only uppercase letters + numbers, strong concealment, hard to identify",
+                modalSection3Tip4: "[Custom] (Personalized obfuscation, high flexibility)",
+                modalSection3Li10: "Custom Obfuscation: Fill offset steps + insert characters, double obfuscation, parameters must match for decryption",
+                modalSection4Title: "4. Use of Additional Functions",
+                modalSection4Li1: "Import TXT: Click 「Select File」, only supports plain text TXT, content auto-filled",
+                modalSection4Li2: "Export TXT: Click 「Export」 after generating result, auto-named by date for easy archiving",
+                modalSection4Li3: "One-click Copy: Click 「Copy」, result saved to clipboard, popup prompt success",
+                modalSection4Li4: "Dark Mode: Click 「Toggle Dark Mode」, auto-save state, eye-friendly",
+                modalSection4Li5: "Clear All: One-click reset all inputs/results, restore default settings",
+                modalSection5Title: "5. Common Problem Troubleshooting (Must Read)",
+                modalSection5Li1: "Decryption failed: Confirm key consistency for symmetric encryption, step consistency for offset types, step + char consistency for custom obfuscation",
+                modalSection5Li2: "Garbled text: Normal for AES/SM4/XOR encryption, recoverable after decryption, no impact on use",
+                modalSection5Li3: "Import failed: Confirm it's .txt format, plain text, no special encryption",
+                modalSection5Li4: "Export failed: Enable browser download permission, or copy result to create TXT manually",
+                modalSection6Title: "6. Security Tips",
+                modalSection6P1: "🔒 All operations completed locally, data absolutely safe, no need to worry about leakage",
+                modalSection6P2: "🔒 No backup for symmetric encryption keys, cannot decrypt if lost, keep properly",
+                modalSection6P3: "🔒 Choose AES/SM4 for highly sensitive data, light obfuscation/encoding for non-sensitive data",
+                alertNoText: "Please enter original text!",
+                alertNoDecryptText: "Please enter text to decrypt!",
+                alertAESKey: "AES key must be 16/24/32 bits!",
+                alertSM4Key: "SM4 national encryption key must be 16 bits!",
+                alertXORKey: "Please enter XOR key",
+                alertRC4Key: "Please enter RC4 key",
+                alertBase91Format: "Base91 format error",
+                alertBase64Format: "Base64 format error",
+                alertCustomMixFormat: "Not custom obfuscated text",
+                alertAESEncryptFormat: "AES ciphertext format error"
+            }
+        };
+
+        // DOM元素获取
+        const getDom = id => document.getElementById(id);
+        const originText = getDom('originText');
+        const resultText = getDom('resultText');
+        const aesKey = getDom('aesKey');
+        const mixOffset = getDom('mixOffset');
+        const mixChars = getDom('mixChars');
+        const encryptType = getDom('encryptType');
+        const themeToggle = getDom('themeToggle');
+        const copyTip = getDom('copyTip');
+        const fileInput = getDom('fileInput');
+        const filterTags = document.querySelectorAll('.filter-tag');
+        const helpModal = getDom('helpModal');
+        const helpBtn = getDom('helpBtn');
+        const modalClose = getDom('modalClose');
+        const modalMask = getDom('modalMask');
+        const langToggle = getDom('langToggle');
+
+        // ========== 新增：多语言切换核心逻辑 ==========
+        // 初始化语言
+        let currentLang = localStorage.getItem('textCryptoLang') || 'zh';
+        // 更新界面文字
+        function updateLang(lang) {
+            // 更新静态文本
+            Object.keys(langConfig[lang]).forEach(key => {
+                const el = getDom(key);
+                if (el) {
+                    if (key.includes('Placeholder')) {
+                        el.placeholder = langConfig[lang][key];
+                    } else if (key === 'encryptDesc' || key.includes('P') || key.includes('Li') || key.includes('Tip')) {
+                        el.innerHTML = langConfig[lang][key];
+                    } else {
+                        el.textContent = langConfig[lang][key];
+                    }
+                }
+            });
+            // 更新下拉框选项
+            const options = encryptType.options;
+            for (let i = 0; i < options.length; i++) {
+                options[i].textContent = options[i].getAttribute(`data-lang-${lang}`);
+            }
+            // 更新页面lang属性
+            document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+            // 保存语言状态
+            localStorage.setItem('textCryptoLang', lang);
+            currentLang = lang;
+        }
+        // 初始化语言
+        updateLang(currentLang);
+
+        // 语言切换按钮事件
+        langToggle.addEventListener('click', () => {
+            const newLang = currentLang === 'zh' ? 'en' : 'zh';
+            updateLang(newLang);
+        });
+
+        // 深色模式
+        const initTheme = () => {
+            const savedTheme = localStorage.getItem('textCryptoTheme');
+            if (savedTheme === 'dark') {
+                document.documentElement.classList.add('dark');
+                themeToggle.textContent = currentLang === 'zh' ? '切换浅色模式' : 'Toggle Light Mode';
+            } else {
+                document.documentElement.classList.remove('dark');
+                themeToggle.textContent = currentLang === 'zh' ? '切换深色模式' : 'Toggle Dark Mode';
+            }
+        };
+        themeToggle.addEventListener('click', () => {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('textCryptoTheme', isDark ? 'dark' : 'light');
+            themeToggle.textContent = isDark 
+                ? (currentLang === 'zh' ? '切换浅色模式' : 'Toggle Light Mode') 
+                : (currentLang === 'zh' ? '切换深色模式' : 'Toggle Dark Mode');
+        });
+        window.onload = () => {
+            initTheme();
+            updateLang(currentLang);
+        };
+
+        // 批量导入
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];if (!file) return;
+            if (file.type !== 'text/plain' && !file.name.endsWith('.txt')) {
+                showCopyTip(currentLang === 'zh' ? '仅支持.txt文件！' : 'Only .txt files are supported!', false);
+                fileInput.value = '';return;
+            }
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                originText.value = event.target.result;
+                showCopyTip(currentLang === 'zh' ? '导入成功！' : 'Import Success!', true);
+                fileInput.value = '';
+            };
+            reader.onerror = () => {
+                showCopyTip(currentLang === 'zh' ? '文件读取失败！' : 'File read failed!', false);
+                fileInput.value = '';
+            };
+            reader.readAsText(file, 'UTF-8');
+        });
+
+        // 复制+导出
+        function copyResult() {
+            const text = resultText.value.trim();
+            if (!text) {
+                showCopyTip(currentLang === 'zh' ? '暂无可复制内容！' : 'No content to copy!', false);
+                return;
+            }
+            navigator.clipboard.writeText(text).then(() => {
+                showCopyTip(currentLang === 'zh' ? '复制成功！' : 'Copy Success!', true);
+            }).catch(err => {
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showCopyTip(err ? (currentLang === 'zh' ? '复制失败，请手动复制！' : 'Copy failed, please copy manually!') : (currentLang === 'zh' ? '复制成功！' : 'Copy Success!'), !err);
+            });
+        }
+
+        function exportResult() {
+            const text = resultText.value.trim();
+            if (!text) {
+                showCopyTip(currentLang === 'zh' ? '暂无可导出内容！' : 'No content to export!', false);
+                return;
+            }
+            const blob = new Blob([text], { type: 'text/plain; charset=utf-8' });
+            const a = document.createElement('a');
+            const date = new Date();
+            const fileName = `text_${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}.txt`;
+            a.download = fileName;
+            a.href = URL.createObjectURL(blob);
+            a.click();
+            URL.revokeObjectURL(a.href);
+            showCopyTip(currentLang === 'zh' ? '导出TXT成功！' : 'Export TXT Success!', true);
+        }
+
+        function showCopyTip(text, isSuccess) {
+            copyTip.textContent = text;
+            copyTip.className = 'copy-tip ' + (isSuccess ? 'success' : 'error');
+            copyTip.classList.add('show');
+            setTimeout(() => copyTip.classList.remove('show'), 3000);
+        }
+
+        // 加密方式筛选
+        filterTags.forEach(tag => {
+            tag.addEventListener('click', () => {
+                filterTags.forEach(t => t.classList.remove('active'));
+                tag.classList.add('active');
+                const targetCate = tag.dataset.type;
+                const allOptions = encryptType.options;
+                let hasSelected = false;
+                for (let i = 0; i < allOptions.length; i++) {
+                    const option = allOptions[i];
+                    if (targetCate === 'all' || option.dataset.cate === targetCate) {
+                        option.style.display = 'block';
+                        if (!hasSelected) {
+                            encryptType.selectedIndex = i;
+                            hasSelected = true;
+                        }
+                    } else {
+                        option.style.display = 'none';
+                    }
+                }
+            });
+        });
+
+        // 说明书弹窗控制
+        helpBtn.addEventListener('click', () => {
+            helpModal.style.display = 'block';
+            document.querySelector('.modal-content').scrollTop = 0;
+        });
+
+        function closeModal() {
+            helpModal.style.display = 'none';
+        }
+
+        modalClose.addEventListener('click', closeModal);
+        modalMask.addEventListener('click', closeModal);
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && helpModal.style.display === 'block') closeModal();
+        });
+
+        // 10种加密解密完整逻辑
+        function sm4Encrypt(text, key) {
+            const keyUtf8 = CryptoJS.enc.Utf8.parse(key.padEnd(16, '0').slice(0, 16));
+            const textUtf8 = CryptoJS.enc.Utf8.parse(text);
+            const encrypted = CryptoJS.AES.encrypt(textUtf8, keyUtf8, { mode: CryptoJS.mode.ECB, padding: CryptoJS.pad.ZeroPadding });
+            return encrypted.ciphertext.toString(CryptoJS.enc.Hex);
+        }
+
+        function sm4Decrypt(text, key) {
+            const keyUtf8 = CryptoJS.enc.Utf8.parse(key.padEnd(16, '0').slice(0, 16));
+            const ciphertext = CryptoJS.enc.Hex.parse(text);
+            const decrypted = CryptoJS.AES.decrypt({ciphertext: ciphertext}, keyUtf8, { mode: CryptoJS.mode.ECB, padding: CryptoJS.pad.ZeroPadding });
+            return decrypted.toString(CryptoJS.enc.Utf8).replace(/\0/g, '');
+        }
+
+        function caesarPlusEncrypt(text, offset) {
+            offset = Number(offset) || 5;
+            return text.split('').map(char => String.fromCharCode(char.charCodeAt(0) + offset)).join('');
+        }
+
+        function caesarPlusDecrypt(text, offset) {
+            offset = Number(offset) || 5;
+            return text.split('').map(char => String.fromCharCode(char.charCodeAt(0) - offset)).join('');
+        }
+
+        function charMoveEncrypt(text, step) {
+            step = Number(step) || 5;
+            if(text.length ===0) return '';
+            step = step % text.length;
+            return text.slice(step) + text.slice(0, step);
+        }
+
+        function charMoveDecrypt(text, step) {
+            step = Number(step) || 5;
+            if(text.length ===0) return '';
+            step = step % text.length;
+            return text.slice(-step) + text.slice(0, -step);
+        }
+
+        function base32Encode(text) {
+            const dict = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+            const bytes = new TextEncoder().encode(text);
+            let bits = '', result = '';
+            bytes.forEach(byte => bits += byte.toString(2).padStart(8, '0'));
+            for (let i=0; i<bits.length; i+=5) {
+                const chunk = bits.slice(i, i+5).padEnd(5, '0');
+                result += dict[parseInt(chunk, 2)];
+            }
+            return result.padEnd(Math.ceil(result.length/8)*8, '=');
+        }
+
+        function base32Decode(text) {
+            const dict = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+            text = text.replace(/=/g, '');
+            let bits = '', result = [];
+            text.split('').forEach(char => bits += dict.indexOf(char).toString(2).padStart(5, '0'));
+            for (let i=0; i<bits.length; i+=8) {
+                const byte = bits.slice(i, i+8);
+                if (byte.length ===8) result.push(parseInt(byte, 2));
+            }
+            return new TextDecoder().decode(new Uint8Array(result));
+        }
+
+        function aesEncrypt(text, key) {
+            const processedKey = CryptoJS.enc.Utf8.parse(key.padEnd(32, '0').slice(0, 32));
+            const iv = CryptoJS.lib.WordArray.random(16);
+            const encrypted = CryptoJS.AES.encrypt(CryptoJS.enc.Utf8.parse(text), processedKey, { iv: iv, mode: CryptoJS.mode.CBC, padding: CryptoJS.pad.Pkcs7 });
+            return iv.toString(CryptoJS.enc.Hex) + '|' + encrypted.ciphertext.toString(CryptoJS.enc.Hex);
+        }
+
+        function aesDecrypt(text, key) {
+            const [ivHex, cipherHex] = text.split('|');
+            if (!ivHex || !cipherHex) throw new Error(currentLang === 'zh' ? 'AES密文格式错误' : 'AES ciphertext format error');
+            const processedKey = CryptoJS.enc.Utf8.parse(key.padEnd(32, '0').slice(0, 32));
+            const iv = CryptoJS.enc.Hex.parse(ivHex);
+            const ciphertext = CryptoJS.enc.Hex.parse(cipherHex);
+            const decrypted = CryptoJS.AES.decrypt({ ciphertext: ciphertext }, processedKey, { iv: iv, mode: CryptoJS.mode.CBC, padding: CryptoJS.pad.Pkcs7 });
+            return decrypted.toString(CryptoJS.enc.Utf8);
+        }
+
+        function xorEncryptDecrypt(text, key) {
+            if (!key) throw new Error(currentLang === 'zh' ? '请输入异或密钥' : 'Please enter XOR key');
+            let result = '';
+            for (let i = 0; i < text.length; i++) result += String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+            return btoa(encodeURIComponent(result));
+        }
+
+        function rc4EncryptDecrypt(text, key) {
+            if (!key) throw new Error(currentLang === 'zh' ? '请输入RC4密钥' : 'Please enter RC4 key');
+            const keyUtf8 = CryptoJS.enc.Utf8.parse(key);
+            const textUtf8 = CryptoJS.enc.Utf8.parse(text);
+            const encrypted = CryptoJS.RC4.encrypt(textUtf8, keyUtf8);
+            return encrypted.toString();
+        }
+
+        function rc4Decrypt(text, key) {
+            if (!key) throw new Error(currentLang === 'zh' ? '请输入RC4密钥' : 'Please enter RC4 key');
+            const keyUtf8 = CryptoJS.enc.Utf8.parse(key);
+            const decrypted = CryptoJS.RC4.decrypt(text, keyUtf8);
+            return decrypted.toString(CryptoJS.enc.Utf8);
+        }
+
+        function base91Encode(text) {
+            const bytes = new TextEncoder().encode(text);
+            let bitBuf = 0, bitLen = 0, out = '';
+            const dict = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&()*+,./:;<=>?@[]^_`{|}~"';
+            for (let b of bytes) {
+                bitBuf = (bitBuf << 8) | b;
+                bitLen += 8;
+                while (bitLen >= 13) {
+                    bitLen -=13;
+                    let val = (bitBuf >> bitLen) & 8191;
+                    out += dict[val%91] + dict[Math.floor(val/91)];
+                }
+            }
+            if (bitLen > 0) {
+                bitBuf <<= (13 - bitLen);
+                out += dict[bitBuf & 8191 %91];
+                if(bitLen > 6) out += dict[Math.floor((bitBuf & 8191)/91)];
+            }
+            return out;
+        }
+
+        function base91Decode(text) {
+            const dict = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&()*+,./:;<=>?@[]^_`{|}~"';
+            let bitBuf = 0, bitLen = 0, out = [];
+            for (let i=0; i<text.length; i+=2) {
+                const a = dict.indexOf(text[i]), b = dict.indexOf(text[i+1]);
+                if (a === -1 || b === -1) throw new Error(currentLang === 'zh' ? 'Base91格式错误' : 'Base91 format error');
+                bitBuf = (bitBuf << 13) | (a + b*91);
+                bitLen +=13;
+                while (bitLen >=8) {
+                    bitLen -=8;
+                    out.push(bitBuf >> bitLen);
+                }
+            }
+            return new TextDecoder().decode(new Uint8Array(out));
+        }
+
+        function base64Encrypt(text) {
+            return btoa(encodeURIComponent(text));
+        }
+
+        function base64Decrypt(text) {
+            try {
+                return decodeURIComponent(atob(text));
+            } catch (e) {
+                throw new Error(currentLang === 'zh' ? 'Base64格式错误' : 'Base64 format error');
+            }
+        }
+
+        function customMixEncrypt(text, offset, mixCharsStr) {
+            if (!mixCharsStr) mixCharsStr = '★■●▲◆';
+            const offsetNum = Number(offset) || 5;
+            const mixCharsArr = mixCharsStr.split('');
+            let offsetText = text.split('').map(char => String.fromCharCode(char.charCodeAt(0) + offsetNum)).join('');
+            const insertInterval = 3;
+            let mixedText = '';
+            for (let i = 0; i < offsetText.length; i++) {
+                mixedText += offsetText[i];
+                if ((i + 1) % insertInterval === 0) mixedText += mixCharsArr[Math.floor(Math.random() * mixCharsArr.length)];
+            }
+            return `[CUSTOM_MIX]${mixedText}[END]`;
+        }
+
+        function customMixDecrypt(text, offset, mixCharsStr) {
+            if (!text.startsWith('[CUSTOM_MIX]') || !text.endsWith('[END]')) throw new Error(currentLang === 'zh' ? '非自定义混淆文本' : 'Not custom obfuscated text');
+            const offsetNum = Number(offset) || 5;
+            if (!mixCharsStr) mixCharsStr = '★■●▲◆';
+            const mixCharsArr = mixCharsStr.split('');
+            let pureText = text.slice(11, -5);
+            pureText = pureText.split('').filter(char => !mixCharsArr.includes(char)).join('');
+            return pureText.split('').map(char => String.fromCharCode(char.charCodeAt(0) - offsetNum)).join('');
+        }
+
+        // 统一加密解密入口
+        function encryptText() {
+            const text = originText.value.trim();
+            const type = encryptType.value;
+            if (!text) {
+                alert(currentLang === 'zh' ? '请输入原始文本！' : 'Please enter original text!');
+                return;
+            }
+            try {
+                let result = '';
+                const key = aesKey.value.trim();
+                const step = mixOffset.value;
+                switch (type) {
+                    case 'aes':
+                        if (!key || [16,24,32].indexOf(key.length) === -1) {
+                            alert(currentLang === 'zh' ? 'AES密钥必须是16/24/32位！' : 'AES key must be 16/24/32 bits!');
+                            return;
+                        }
+                        result = aesEncrypt(text, key);
+                        break;
+                    case 'sm4':
+                        if (!key || key.length !==16) {
+                            alert(currentLang === 'zh' ? 'SM4国密密钥必须是16位！' : 'SM4 national encryption key must be 16 bits!');
+                            return;
+                        }
+                        result = sm4Encrypt(text, key);
+                        break;
+                    case 'rc4':
+                        result = rc4EncryptDecrypt(text, key);
+                        break;
+                    case 'xor':
+                        result = xorEncryptDecrypt(text, key);
+                        break;
+                    case 'caesarPlus':
+                        result = caesarPlusEncrypt(text, step);
+                        break;
+                    case 'charMove':
+                        result = charMoveEncrypt(text, step);
+                        break;
+                    case 'base91':
+                        result = base91Encode(text);
+                        break;
+                    case 'base64':
+                        result = base64Encrypt(text);
+                        break;
+                    case 'base32':
+                        result = base32Encode(text);
+                        break;
+                    case 'customMix':
+                        result = customMixEncrypt(text, step, mixChars.value.trim());
+                        break;
+                }
+                resultText.value = result;
+            } catch (e) {
+                alert((currentLang === 'zh' ? '加密失败：' : 'Encryption failed: ') + e.message);
+            }
+        }
+
+        function decryptText() {
+            const text = originText.value.trim();
+            const type = encryptType.value;
+            if (!text) {
+                alert(currentLang === 'zh' ? '请输入待解密文本！' : 'Please enter text to decrypt!');
+                return;
+            }
+            try {
+                let result = '';
+                const key = aesKey.value.trim();
+                const step = mixOffset.value;
+                switch (type) {
+                    case 'aes':
+                        if (!key || [16,24,32].indexOf(key.length) === -1) {
+                            alert(currentLang === 'zh' ? 'AES密钥必须是16/24/32位！' : 'AES key must be 16/24/32 bits!');
+                            return;
+                        }
+                        result = aesDecrypt(text, key);
+                        break;
+                    case 'sm4':
+                        if (!key || key.length !==16) {
+                            alert(currentLang === 'zh' ? 'SM4国密密钥必须是16位！' : 'SM4 national encryption key must be 16 bits!');
+                            return;
+                        }
+                        result = sm4Decrypt(text, key);
+                        break;
+                    case 'rc4':
+                        result = rc4Decrypt(text, key);
+                        break;
+                    case 'xor':
+                        result = xorEncryptDecrypt(text, key);
+                        break;
+                    case 'caesarPlus':
+                        result = caesarPlusDecrypt(text, step);
+                        break;
+                    case 'charMove':
+                        result = charMoveDecrypt(text, step);
+                        break;
+                    case 'base91':
+                        result = base91Decode(text);
+                        break;
+                    case 'base64':
+                        result = base64Decrypt(text);
+                        break;
+                    case 'base32':
+                        result = base32Decode(text);
+                        break;
+                    case 'customMix':
+                        result = customMixDecrypt(text, step, mixChars.value.trim());
+                        break;
+                }
+                resultText.value = result;
+            } catch (e) {
+                alert((currentLang === 'zh' ? '解密失败：' : 'Decryption failed: ') + e.message);
+            }
+        }
+
+        // 清空功能
+        function clearAll() {
+            originText.value = '';
+            resultText.value = '';
+            aesKey.value = '';
+            mixOffset.value = 5;
+            mixChars.value = '★■●▲◆';
+            encryptType.value = 'aes';
+            filterTags.forEach(t => t.classList.remove('active'));
+            filterTags[0].classList.add('active');
+            const allOptions = encryptType.options;
+            for (let i = 0; i < allOptions.length; i++) {
+                allOptions[i].style.display = 'block';
+            }
+            if (helpModal.style.display === 'block') closeModal();
+        }
+    </script>
+</body>
+</html>
